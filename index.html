@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Country Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-globe">🌍</span>
+        <span class="logo-text">Country<em>Explorer</em></span>
+      </div>
+      <div class="header-right">
+        <span class="country-count" id="countryCount">— countries</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <section class="hero">
+      <h1>Explore the<br><span class="hero-accent">World</span></h1>
+      <p>Search any country to discover its flag, population, capital, region and more.</p>
+    </section>
+
+    <div class="search-bar">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Search country, capital, region…" autocomplete="off" />
+      <button class="clear-btn hidden" id="clearBtn">✕</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-pill active" data-region="all">All</button>
+      <button class="filter-pill" data-region="Africa">Africa</button>
+      <button class="filter-pill" data-region="Americas">Americas</button>
+      <button class="filter-pill" data-region="Asia">Asia</button>
+      <button class="filter-pill" data-region="Europe">Europe</button>
+      <button class="filter-pill" data-region="Oceania">Oceania</button>
+    </div>
+
+    <div class="sort-row">
+      <span class="results-label" id="resultsLabel"></span>
+      <select id="sortSelect">
+        <option value="name">Sort: A → Z</option>
+        <option value="name-desc">Sort: Z → A</option>
+        <option value="population">Population ↓</option>
+        <option value="population-asc">Population ↑</option>
+        <option value="area">Area ↓</option>
+      </select>
+    </div>
+
+    <div class="grid" id="countryGrid"></div>
+
+    <div class="loading hidden" id="loading">
+      <div class="spinner"></div>
+      <p>Fetching countries…</p>
+    </div>
+
+    <div class="error hidden" id="errorMsg">
+      <span>⚠️</span>
+      <p>Could not load countries. Check your connection.</p>
+      <button class="btn-retry" id="retryBtn">Retry</button>
+    </div>
+
+    <div class="empty hidden" id="emptyMsg">
+      <span>🔍</span>
+      <p>No countries found for "<span id="emptyQuery"></span>"</p>
+    </div>
+
+  </main>
+
+  <!-- Country Detail Modal -->
+  <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
