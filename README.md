@@ -3,7 +3,6 @@
 > Explore every country in the world — search by name, filter by region, and view flags, population, capital & more.
 
 <img width="1873" height="1033" alt="image" src="https://github.com/user-attachments/assets/c98798c0-ab1e-4d8f-9333-a6709c4d9226" />
-![Preview](preview.png)
 
 ---
 
