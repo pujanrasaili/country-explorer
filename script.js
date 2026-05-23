@@ -26,7 +26,7 @@ const retryBtn = document.getElementById('retryBtn');
 async function fetchCountries() {
   showLoading(true);
   try {
-    const res = await fetch(`${API}/all?fields=name,flags,population,capital,region,subregion,area,languages,currencies,timezones,maps,cca2`);
+    const res = await fetch(`${API}/all?fields=name,flags,population,capital,region,subregion,area,languages,currencies`);
     if (!res.ok) throw new Error('Failed');
     allCountries = await res.json();
     countryCount.textContent = `${allCountries.length} countries`;
@@ -171,3 +171,6 @@ sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; apply
 retryBtn.addEventListener('click', fetchCountries);
 
 fetchCountries();
+
+
+
