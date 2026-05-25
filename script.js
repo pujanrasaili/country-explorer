@@ -1,7 +1,4 @@
-const APIS = [
-  'https://restcountries.com/v3.1',
-  'https://rest-countries-api-with-cors.p.rapidapi.com'
-];
+const API = 'https://restcountries.com/v3.1';
 
 let allCountries = [];
 let activeRegion = 'all';
@@ -29,7 +26,6 @@ const favBadge = document.getElementById('favBadge');
 const toast = document.getElementById('toast');
 const filtersRow = document.getElementById('filtersRow');
 
-// Fetch with multiple endpoints + timeout
 async function fetchWithTimeout(url, ms = 8000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
@@ -45,27 +41,16 @@ async function fetchWithTimeout(url, ms = 8000) {
 
 async function fetchCountries() {
   showLoading(true);
-  const fields = 'name,flags,population,capital,region,subregion,area,languages,currencies,timezones,maps,cca2';
-  
-  // Try primary API
-  try {
-    const res = await fetchWithTimeout(`https://restcountries.com/v3.1/all?fields=${fields}`);
-    if(res.ok) {
-      allCountries = await res.json();
-      onCountriesLoaded();
-      return;
-    }
-  } catch(e) { console.warn('Primary API failed, trying backup...'); }
+  const fields = 'name,flags,population,capital,region,subregion,area,languages,currencies,cca2';
 
-  // Try without field filtering (simpler request)
   try {
-    const res = await fetchWithTimeout(`https://restcountries.com/v3.1/all`);
+    const res = await fetchWithTimeout(`${API}/all?fields=${fields}`);
     if(res.ok) {
       allCountries = await res.json();
       onCountriesLoaded();
       return;
     }
-  } catch(e) { console.warn('Backup request also failed'); }
+  } catch(e) { console.warn('Primary API failed:', e.message); }
 
   showLoading(false);
   errorMsg.classList.remove('hidden');
@@ -83,7 +68,6 @@ function showLoading(show) {
   emptyMsg.classList.add('hidden');
 }
 
-// Favorites
 function isFav(cca2) { return favorites.includes(cca2); }
 
 function toggleFav(cca2, name) {
@@ -186,7 +170,6 @@ function openModal(c) {
   const currencies = c.currencies
     ? Object.values(c.currencies).map(cur => `${cur.name}${cur.symbol ? ' (' + cur.symbol + ')' : ''}`).join(', ')
     : '—';
-  const timezones = c.timezones?.slice(0, 3).join(', ') + (c.timezones?.length > 3 ? '…' : '') || '—';
   const favActive = isFav(c.cca2);
   modalBody.innerHTML = `
     <img class="modal-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" />
@@ -199,17 +182,12 @@ function openModal(c) {
         <div class="modal-stat"><label>Population</label><span>${formatNum(c.population)}</span></div>
         <div class="modal-stat"><label>Area</label><span>${c.area ? formatNum(Math.round(c.area)) + ' km²' : '—'}</span></div>
         <div class="modal-stat"><label>Currency</label><span>${currencies}</span></div>
-        <div class="modal-stat"><label>Timezone</label><span>${timezones}</span></div>
-      </div>
-      <div class="modal-section-title">Languages</div>
-      <div class="modal-tags">
-        ${c.languages ? Object.values(c.languages).map(l => `<span class="modal-tag">${l}</span>`).join('') : '<span class="modal-tag">—</span>'}
+        <div class="modal-stat"><label>Languages</label><span>${c.languages ? Object.values(c.languages).join(', ') : '—'}</span></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
         <button class="modal-fav-btn ${favActive ? 'active' : ''}" data-fav-cca="${c.cca2}" data-fav-name="${c.name.common}">
           ${favActive ? '❤️ Saved' : '🤍 Save to Favorites'}
         </button>
-        ${c.maps?.googleMaps ? `<a class="modal-maps-btn" href="${c.maps.googleMaps}" target="_blank">🗺 View on Maps</a>` : ''}
       </div>
     </div>`;
   modalBody.querySelector('.modal-fav-btn').addEventListener('click', function() {
@@ -241,7 +219,6 @@ function formatNum(n) {
   return n.toString();
 }
 
-// Events
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) closeModal(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
