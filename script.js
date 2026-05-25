@@ -1,10 +1,13 @@
-const API = 'https://restcountries.com/v3.1';
+const APIS = [
+  'https://restcountries.com/v3.1',
+  'https://rest-countries-api-with-cors.p.rapidapi.com'
+];
 
 let allCountries = [];
 let activeRegion = 'all';
 let searchQuery = '';
 let sortMode = 'name';
-let currentView = 'all'; // 'all' or 'favorites'
+let currentView = 'all';
 let favorites = JSON.parse(localStorage.getItem('countryFavorites') || '[]');
 
 // DOM
@@ -26,20 +29,52 @@ const favBadge = document.getElementById('favBadge');
 const toast = document.getElementById('toast');
 const filtersRow = document.getElementById('filtersRow');
 
-// Fetch
+// Fetch with multiple endpoints + timeout
+async function fetchWithTimeout(url, ms = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch(e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
 async function fetchCountries() {
   showLoading(true);
+  const fields = 'name,flags,population,capital,region,subregion,area,languages,currencies,timezones,maps,cca2';
+  
+  // Try primary API
   try {
-    const res = await fetch(`${API}/all?fields=name,flags,population,capital,region,subregion,area,languages,currencies,timezones,maps,cca2`);
-    if (!res.ok) throw new Error('Failed');
-    allCountries = await res.json();
-    countryCount.textContent = `${allCountries.length} countries`;
-    applyFilters();
-    showLoading(false);
-  } catch(e) {
-    showLoading(false);
-    errorMsg.classList.remove('hidden');
-  }
+    const res = await fetchWithTimeout(`https://restcountries.com/v3.1/all?fields=${fields}`);
+    if(res.ok) {
+      allCountries = await res.json();
+      onCountriesLoaded();
+      return;
+    }
+  } catch(e) { console.warn('Primary API failed, trying backup...'); }
+
+  // Try without field filtering (simpler request)
+  try {
+    const res = await fetchWithTimeout(`https://restcountries.com/v3.1/all`);
+    if(res.ok) {
+      allCountries = await res.json();
+      onCountriesLoaded();
+      return;
+    }
+  } catch(e) { console.warn('Backup request also failed'); }
+
+  showLoading(false);
+  errorMsg.classList.remove('hidden');
+}
+
+function onCountriesLoaded() {
+  countryCount.textContent = `${allCountries.length} countries`;
+  applyFilters();
+  showLoading(false);
 }
 
 function showLoading(show) {
@@ -48,7 +83,7 @@ function showLoading(show) {
   emptyMsg.classList.add('hidden');
 }
 
-// Favorites helpers
+// Favorites
 function isFav(cca2) { return favorites.includes(cca2); }
 
 function toggleFav(cca2, name) {
@@ -62,7 +97,6 @@ function toggleFav(cca2, name) {
   localStorage.setItem('countryFavorites', JSON.stringify(favorites));
   updateFavBadge();
   if(currentView === 'favorites') applyFilters();
-  // Update any visible fav buttons
   document.querySelectorAll(`[data-fav-cca="${cca2}"]`).forEach(btn => {
     btn.classList.toggle('active', isFav(cca2));
     btn.textContent = isFav(cca2) ? '❤️' : '🤍';
@@ -74,10 +108,8 @@ function updateFavBadge() {
   favBadge.style.display = favorites.length > 0 ? 'inline' : 'none';
 }
 
-// Filter + Sort + Render
 function applyFilters() {
   let results = [...allCountries];
-
   if(currentView === 'favorites') {
     results = results.filter(c => isFav(c.cca2));
     filtersRow.style.opacity = '0.4';
@@ -87,7 +119,6 @@ function applyFilters() {
     filtersRow.style.pointerEvents = '';
     if(activeRegion !== 'all') results = results.filter(c => c.region === activeRegion);
   }
-
   if(searchQuery) {
     const q = searchQuery.toLowerCase();
     results = results.filter(c =>
@@ -98,7 +129,6 @@ function applyFilters() {
       (c.subregion && c.subregion.toLowerCase().includes(q))
     );
   }
-
   results.sort((a, b) => {
     switch(sortMode) {
       case 'name': return a.name.common.localeCompare(b.name.common);
@@ -109,9 +139,7 @@ function applyFilters() {
       default: return 0;
     }
   });
-
   resultsLabel.textContent = `${results.length} ${results.length === 1 ? 'country' : 'countries'}`;
-
   if(results.length === 0) {
     emptyMsg.classList.remove('hidden');
     grid.innerHTML = '';
@@ -134,8 +162,8 @@ function renderGrid(countries) {
     card.style.animationDelay = `${Math.min(i * 20, 300)}ms`;
     const favActive = isFav(c.cca2);
     card.innerHTML = `
-      <button class="card-fav-btn ${favActive ? 'active' : ''}" data-fav-cca="${c.cca2}" data-fav-name="${c.name.common}" title="${favActive ? 'Remove from favorites' : 'Add to favorites'}">${favActive ? '❤️' : '🤍'}</button>
-      <img class="card-flag" src="${c.flags.svg || c.flags.png}" alt="${c.name.common} flag" loading="lazy" />
+      <button class="card-fav-btn ${favActive ? 'active' : ''}" data-fav-cca="${c.cca2}" data-fav-name="${c.name.common}">${favActive ? '❤️' : '🤍'}</button>
+      <img class="card-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" loading="lazy" />
       <div class="card-body">
         <div class="card-name">${c.name.common}</div>
         <div class="card-info">
@@ -145,28 +173,23 @@ function renderGrid(countries) {
         </div>
         <span class="card-region">${c.region}</span>
       </div>`;
-
-    // Fav button click (stop propagation so it doesn't open modal)
     card.querySelector('.card-fav-btn').addEventListener('click', e => {
       e.stopPropagation();
       toggleFav(c.cca2, c.name.common);
     });
-
     card.addEventListener('click', () => openModal(c));
     grid.appendChild(card);
   });
 }
 
-// Modal
 function openModal(c) {
   const currencies = c.currencies
     ? Object.values(c.currencies).map(cur => `${cur.name}${cur.symbol ? ' (' + cur.symbol + ')' : ''}`).join(', ')
     : '—';
   const timezones = c.timezones?.slice(0, 3).join(', ') + (c.timezones?.length > 3 ? '…' : '') || '—';
   const favActive = isFav(c.cca2);
-
   modalBody.innerHTML = `
-    <img class="modal-flag" src="${c.flags.svg || c.flags.png}" alt="${c.name.common} flag" />
+    <img class="modal-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" />
     <div class="modal-content">
       <div class="modal-name">${c.name.common}</div>
       <div class="modal-native">${c.name.official}</div>
@@ -189,15 +212,12 @@ function openModal(c) {
         ${c.maps?.googleMaps ? `<a class="modal-maps-btn" href="${c.maps.googleMaps}" target="_blank">🗺 View on Maps</a>` : ''}
       </div>
     </div>`;
-
-  // Modal fav button
   modalBody.querySelector('.modal-fav-btn').addEventListener('click', function() {
     toggleFav(c.cca2, c.name.common);
     const nowFav = isFav(c.cca2);
     this.classList.toggle('active', nowFav);
     this.textContent = nowFav ? '❤️ Saved' : '🤍 Save to Favorites';
   });
-
   modalOverlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -207,7 +227,6 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-// Toast
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.remove('hidden');
@@ -226,19 +245,16 @@ function formatNum(n) {
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) closeModal(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
-
 searchInput.addEventListener('input', () => {
   searchQuery = searchInput.value.trim();
   clearBtn.classList.toggle('hidden', !searchQuery);
   applyFilters();
 });
-
 clearBtn.addEventListener('click', () => {
   searchInput.value = ''; searchQuery = '';
   clearBtn.classList.add('hidden');
   applyFilters();
 });
-
 document.querySelectorAll('.filter-pill').forEach(pill => {
   pill.addEventListener('click', () => {
     document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
@@ -247,11 +263,8 @@ document.querySelectorAll('.filter-pill').forEach(pill => {
     applyFilters();
   });
 });
-
 sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; applyFilters(); });
 retryBtn.addEventListener('click', fetchCountries);
-
-// Nav tabs (All / Favorites)
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -261,6 +274,5 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   });
 });
 
-// Init
 updateFavBadge();
 fetchCountries();
