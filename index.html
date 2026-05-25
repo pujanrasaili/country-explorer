@@ -16,7 +16,9 @@
         <span class="logo-globe">🌍</span>
         <span class="logo-text">Country<em>Explorer</em></span>
       </div>
-      <div class="header-right">
+      <div class="header-nav">
+        <button class="nav-btn active" data-view="all">All</button>
+        <button class="nav-btn" data-view="favorites">❤️ Favorites <span class="fav-badge" id="favBadge">0</span></button>
         <span class="country-count" id="countryCount">— countries</span>
       </div>
     </div>
@@ -35,7 +37,7 @@
       <button class="clear-btn hidden" id="clearBtn">✕</button>
     </div>
 
-    <div class="filters">
+    <div class="filters" id="filtersRow">
       <button class="filter-pill active" data-region="all">All</button>
       <button class="filter-pill" data-region="Africa">Africa</button>
       <button class="filter-pill" data-region="Americas">Americas</button>
@@ -70,7 +72,7 @@
 
     <div class="empty hidden" id="emptyMsg">
       <span>🔍</span>
-      <p>No countries found for "<span id="emptyQuery"></span>"</p>
+      <p id="emptyText">No countries found.</p>
     </div>
 
   </main>
@@ -82,6 +84,8 @@
       <div class="modal-body" id="modalBody"></div>
     </div>
   </div>
+
+  <div id="toast" class="toast hidden"></div>
 
   <script src="script.js"></script>
 </body>
