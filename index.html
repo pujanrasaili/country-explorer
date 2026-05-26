@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Country Explorer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -18,9 +18,12 @@
       </div>
       <div class="header-nav">
         <button class="nav-btn active" data-view="all">All</button>
-        <button class="nav-btn" data-view="favorites">❤️ Favorites <span class="fav-badge" id="favBadge">0</span></button>
-        <span class="country-count" id="countryCount">— countries</span>
-        <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+        <button class="nav-btn" data-view="favorites">
+          <span>❤️</span> Favorites
+          <span class="fav-badge" id="favBadge" style="display:none">0</span>
+        </button>
+        <span class="country-count" id="countryCount"></span>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
       </div>
     </div>
   </header>
@@ -28,88 +31,82 @@
   <main class="main">
 
     <section class="hero">
-      <div class="hero-flags" aria-hidden="true">
-        <span>🇧🇷</span><span>🇨🇦</span><span>🇯🇵</span><span>🇳🇬</span><span>🇫🇷</span>
-        <span>🇦🇺</span><span>🇮🇳</span><span>🇪🇸</span><span>🇵🇭</span><span>🇹🇷</span>
-      </div>
-      <div class="hero-copy">
-        <h1>Explore the<br><span class="hero-accent">World</span></h1>
-        <p>Search any country to discover its flag, population, capital, region and more.</p>
-      </div>
-      <div class="hero-stats">
-        <span class="hero-label">Countries loaded</span>
-        <strong id="heroCounter">0</strong>
+      <div class="hero-bg" id="heroBg"></div>
+      <div class="hero-content">
+        <p class="hero-eyebrow">World Atlas</p>
+        <h1 class="hero-title">
+          Explore<br>
+          <em class="hero-accent">Every Nation</em>
+        </h1>
+        <p class="hero-sub">Discover flags, capitals, populations and more across <span class="hero-counter" id="heroCounter">0</span> countries.</p>
       </div>
     </section>
 
-    <div class="search-bar">
-      <span class="search-icon">⌕</span>
-      <input type="text" id="searchInput" placeholder="Search country, capital, region…" autocomplete="off" />
-      <button class="clear-btn hidden" id="clearBtn" aria-label="Clear search">✕</button>
-    </div>
-    <div class="suggestions hidden" id="suggestionsList"></div>
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="searchInput" placeholder="Search country, capital, region…" autocomplete="off" />
+        <button class="clear-btn hidden" id="clearBtn">✕</button>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
 
-    <div class="filters" id="filtersRow">
-      <span class="search-icon">⌕</span>
-      <input type="text" id="searchInput" placeholder="Search country, capital, region…" autocomplete="off" />
-      <button class="clear-btn hidden" id="clearBtn">✕</button>
+      <div class="filters" id="filtersRow">
+        <button class="filter-pill active" data-region="all">🌐 All</button>
+        <button class="filter-pill" data-region="Africa">🌍 Africa</button>
+        <button class="filter-pill" data-region="Americas">🌎 Americas</button>
+        <button class="filter-pill" data-region="Asia">🌏 Asia</button>
+        <button class="filter-pill" data-region="Europe">🏰 Europe</button>
+        <button class="filter-pill" data-region="Oceania">🏝️ Oceania</button>
+      </div>
+
+      <div class="sort-row">
+        <span class="results-label" id="resultsLabel"></span>
+        <select id="sortSelect">
+          <option value="name">A → Z</option>
+          <option value="name-desc">Z → A</option>
+          <option value="population">Population ↓</option>
+          <option value="population-asc">Population ↑</option>
+          <option value="area">Area ↓</option>
+        </select>
+      </div>
     </div>
 
-    <div class="filters" id="filtersRow">
-      <button class="filter-pill active" data-region="all">All</button>
-      <button class="filter-pill" data-region="Africa">Africa</button>
-      <button class="filter-pill" data-region="Americas">Americas</button>
-      <button class="filter-pill" data-region="Asia">Asia</button>
-      <button class="filter-pill" data-region="Europe">Europe</button>
-      <button class="filter-pill" data-region="Oceania">Oceania</button>
-    </div>
-
-    <div class="sort-row">
-      <span class="results-label" id="resultsLabel"></span>
-      <select id="sortSelect">
-        <option value="name">Sort: A → Z</option>
-        <option value="name-desc">Sort: Z → A</option>
-        <option value="population">Population ↓</option>
-        <option value="population-asc">Population ↑</option>
-        <option value="area">Area ↓</option>
-      </select>
+    <!-- Skeleton -->
+    <div class="skeleton-grid" id="skeletonGrid">
+      ${Array(12).fill('<div class="skeleton-card"><div class="sk sk-img"></div><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>').join('')}
     </div>
 
     <div class="grid" id="countryGrid"></div>
 
-    <div class="loading hidden" id="loading">
-      <div class="spinner"></div>
-      <p>Fetching countries…</p>
-      <div class="skeleton-grid" id="skeletonGrid"></div>
-    </div>
-
     <div class="error hidden" id="errorMsg">
-      <span>⚠️</span>
-      <p>Could not load countries. Check your connection.</p>
-      <button class="btn-retry" id="retryBtn">Retry</button>
+      <div class="error-icon">⚠️</div>
+      <p>Could not load countries.</p>
+      <button class="btn-retry" id="retryBtn">Try Again</button>
     </div>
 
     <div class="empty hidden" id="emptyMsg">
-      <span>🔍</span>
+      <div class="empty-icon">🔍</div>
       <p id="emptyText">No countries found.</p>
     </div>
 
   </main>
 
-  <button id="scrollTopBtn" class="scroll-top hidden" aria-label="Scroll to top">↑</button>
+  <button class="scroll-top hidden" id="scrollTop">↑</button>
 
-  <!-- Country Detail Modal -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Built by <a href="https://github.com/pujanrasaili" target="_blank">Pujan Rasaili</a></span>
+      <span>Data from <a href="https://restcountries.com" target="_blank">REST Countries API</a></span>
+    </div>
+  </footer>
+
+  <!-- Modal -->
   <div class="modal-overlay hidden" id="modalOverlay">
     <div class="modal" id="modal">
       <button class="modal-close" id="modalClose">✕</button>
       <div class="modal-body" id="modalBody"></div>
     </div>
   </div>
-
-  <footer class="footer">
-    <div>Built by Pujan Rasaili · <a href="https://github.com/pujanrasaili" target="_blank" rel="noreferrer">GitHub</a></div>
-    <div id="footerInfo">Loading... · Data via restcountries.com</div>
-  </footer>
 
   <div id="toast" class="toast hidden"></div>
 
