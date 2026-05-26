@@ -1,5 +1,5 @@
 const API = 'https://restcountries.com/v3.1';
-const FIELDS = 'name,flags,population,capital,region,subregion,area,languages,currencies,cca2,cca3,borders';
+const FIELDS = 'name,flags,population,capital,region,subregion,area,languages,currencies,cca2';
 
 let allCountries = [];
 let activeRegion = 'all';
@@ -213,17 +213,8 @@ function openModal(c) {
   const langs = c.languages ? Object.values(c.languages) : [];
   const favActive = isFav(c.cca2);
 
-  // Build neighbors HTML
+  // Neighbors not available without borders field
   let neighborsHTML = '';
-  if (c.borders?.length) {
-    const chips = c.borders.map(code => {
-      const neighbor = allCountries.find(x => x.cca3 === code);
-      return neighbor
-        ? `<button class="modal-neighbor-chip" data-cca2="${neighbor.cca2}">${neighbor.flags?.emoji || ''} ${neighbor.name.common}</button>`
-        : `<span class="modal-tag">${code}</span>`;
-    }).join('');
-    neighborsHTML = `<div class="modal-neighbors"><div class="modal-section-title">Borders (${c.borders.length})</div>${chips}</div>`;
-  }
 
   modalBody.innerHTML = `
     <div class="modal-flag-wrap">
