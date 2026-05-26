@@ -1,17 +1,21 @@
 const API = 'https://restcountries.com/v3.1';
+const KEY_FAVORITES = 'countryFavorites';
+const KEY_THEME = 'themeMode';
 
 let allCountries = [];
 let activeRegion = 'all';
 let searchQuery = '';
 let sortMode = 'name';
 let currentView = 'all';
-let favorites = JSON.parse(localStorage.getItem('countryFavorites') || '[]');
+let favorites = JSON.parse(localStorage.getItem(KEY_FAVORITES) || '[]');
+let themeMode = 'light';
 
 // DOM
 const grid = document.getElementById('countryGrid');
 const searchInput = document.getElementById('searchInput');
 const clearBtn = document.getElementById('clearBtn');
 const loading = document.getElementById('loading');
+const skeletonGrid = document.getElementById('skeletonGrid');
 const errorMsg = document.getElementById('errorMsg');
 const emptyMsg = document.getElementById('emptyMsg');
 const emptyText = document.getElementById('emptyText');
@@ -25,6 +29,11 @@ const retryBtn = document.getElementById('retryBtn');
 const favBadge = document.getElementById('favBadge');
 const toast = document.getElementById('toast');
 const filtersRow = document.getElementById('filtersRow');
+const themeToggle = document.getElementById('themeToggle');
+const heroCounter = document.getElementById('heroCounter');
+const suggestionsList = document.getElementById('suggestionsList');
+const scrollTopBtn = document.getElementById('scrollTopBtn');
+const footerInfo = document.getElementById('footerInfo');
 
 async function fetchWithTimeout(url, ms = 8000) {
   const controller = new AbortController();
@@ -41,31 +50,46 @@ async function fetchWithTimeout(url, ms = 8000) {
 
 async function fetchCountries() {
   showLoading(true);
-  const fields = 'name,flags,population,capital,region,subregion,area,languages,currencies,cca2';
+  showSkeleton(true);
+  const fields = 'name,flags,population,capital,region,subregion,area,languages,currencies,cca2,cca3,borders';
 
   try {
     const res = await fetchWithTimeout(`${API}/all?fields=${fields}`);
-    if(res.ok) {
+    if (res.ok) {
       allCountries = await res.json();
       onCountriesLoaded();
       return;
     }
-  } catch(e) { console.warn('Primary API failed:', e.message); }
-
-  showLoading(false);
-  errorMsg.classList.remove('hidden');
+    throw new Error('Bad response');
+  } catch (e) {
+    console.warn('Primary API failed:', e.message);
+    showLoading(false);
+    showSkeleton(false);
+    errorMsg.classList.remove('hidden');
+  }
 }
 
 function onCountriesLoaded() {
+  heroCountUp(allCountries.length);
   countryCount.textContent = `${allCountries.length} countries`;
+  footerInfo.textContent = `${allCountries.length} countries loaded · Data via restcountries.com`;
   applyFilters();
   showLoading(false);
+  showSkeleton(false);
 }
 
 function showLoading(show) {
   loading.classList.toggle('hidden', !show);
   errorMsg.classList.add('hidden');
   emptyMsg.classList.add('hidden');
+}
+
+function showSkeleton(show) {
+  if (!show) {
+    skeletonGrid.innerHTML = '';
+    return;
+  }
+  skeletonGrid.innerHTML = Array.from({ length: 6 }, () => '<div class="skeleton-card"></div>').join('');
 }
 
 function isFav(cca2) { return favorites.includes(cca2); }
@@ -136,28 +160,44 @@ function applyFilters() {
     emptyMsg.classList.add('hidden');
     renderGrid(results);
   }
+  renderSuggestions(searchQuery);
 }
 
 function renderGrid(countries) {
   grid.innerHTML = '';
   countries.forEach((c, i) => {
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = `card region-${c.region || 'all'}`;
     card.style.animationDelay = `${Math.min(i * 20, 300)}ms`;
     const favActive = isFav(c.cca2);
+    const currencyList = c.currencies
+      ? Object.values(c.currencies).map(cur => `${cur.name}${cur.symbol ? ' (' + cur.symbol + ')' : ''}`).join(', ')
+      : '—';
+    const languages = c.languages ? Object.values(c.languages).join(', ') : '—';
     card.innerHTML = `
-      <button class="card-fav-btn ${favActive ? 'active' : ''}" data-fav-cca="${c.cca2}" data-fav-name="${c.name.common}">${favActive ? '❤️' : '🤍'}</button>
-      <img class="card-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" loading="lazy" />
-      <div class="card-body">
-        <div class="card-name">${c.name.common}</div>
-        <div class="card-info">
-          <span><strong>Capital:</strong> ${c.capital?.[0] || '—'}</span>
-          <span><strong>Population:</strong> ${formatNum(c.population)}</span>
-          <span><strong>Area:</strong> ${c.area ? formatNum(Math.round(c.area)) + ' km²' : '—'}</span>
+      <div class="card-inner">
+        <div class="card-front">
+          <button class="card-fav-btn ${favActive ? 'active' : ''}" data-fav-cca="${c.cca2}" data-fav-name="${c.name.common}">${favActive ? '❤️' : '🤍'}</button>
+          <img class="card-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" loading="lazy" />
+          <div class="card-body">
+            <div class="card-name">${c.name.common}</div>
+            <div class="card-info">
+              <span><strong>Capital:</strong> ${c.capital?.[0] || '—'}</span>
+              <span><strong>Population:</strong> ${formatNum(c.population)}</span>
+              <span><strong>Area:</strong> ${c.area ? formatNum(Math.round(c.area)) + ' km²' : '—'}</span>
+            </div>
+            <span class="card-region">${c.region}</span>
+          </div>
         </div>
-        <span class="card-region">${c.region}</span>
+        <div class="card-back">
+          <h3>More about ${c.name.common}</h3>
+          <p><strong>Languages:</strong> ${languages}</p>
+          <p><strong>Currency:</strong> ${currencyList}</p>
+          <small>Click for full details.</small>
+        </div>
       </div>`;
-    card.querySelector('.card-fav-btn').addEventListener('click', e => {
+    const favButton = card.querySelector('.card-fav-btn');
+    favButton.addEventListener('click', e => {
       e.stopPropagation();
       toggleFav(c.cca2, c.name.common);
     });
@@ -170,9 +210,19 @@ function openModal(c) {
   const currencies = c.currencies
     ? Object.values(c.currencies).map(cur => `${cur.name}${cur.symbol ? ' (' + cur.symbol + ')' : ''}`).join(', ')
     : '—';
+  const languages = c.languages ? Object.values(c.languages).join(', ') : '—';
   const favActive = isFav(c.cca2);
+  const neighbors = c.borders
+    ? allCountries.filter(country => c.borders.includes(country.cca3))
+    : [];
+  const neighborChips = neighbors.length
+    ? neighbors.map(n => `<button class="modal-tag" data-cca3="${n.cca3}">${n.name.common}</button>`).join('')
+    : '<span>None available</span>';
+
   modalBody.innerHTML = `
-    <img class="modal-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" />
+    <div class="modal-flag-wrapper">
+      <img class="modal-flag" src="${c.flags?.svg || c.flags?.png || ''}" alt="${c.name.common} flag" />
+    </div>
     <div class="modal-content">
       <div class="modal-name">${c.name.common}</div>
       <div class="modal-native">${c.name.official}</div>
@@ -182,20 +232,33 @@ function openModal(c) {
         <div class="modal-stat"><label>Population</label><span>${formatNum(c.population)}</span></div>
         <div class="modal-stat"><label>Area</label><span>${c.area ? formatNum(Math.round(c.area)) + ' km²' : '—'}</span></div>
         <div class="modal-stat"><label>Currency</label><span>${currencies}</span></div>
-        <div class="modal-stat"><label>Languages</label><span>${c.languages ? Object.values(c.languages).join(', ') : '—'}</span></div>
+        <div class="modal-stat"><label>Languages</label><span>${languages}</span></div>
       </div>
+      <div class="modal-section-title">Neighboring Countries</div>
+      <div class="modal-tags">${neighborChips}</div>
       <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
         <button class="modal-fav-btn ${favActive ? 'active' : ''}" data-fav-cca="${c.cca2}" data-fav-name="${c.name.common}">
           ${favActive ? '❤️ Saved' : '🤍 Save to Favorites'}
         </button>
+        <a class="modal-maps-btn" href="https://www.google.com/maps/search/${encodeURIComponent(c.name.common)}" target="_blank" rel="noreferrer">View on Map</a>
       </div>
     </div>`;
+
   modalBody.querySelector('.modal-fav-btn').addEventListener('click', function() {
     toggleFav(c.cca2, c.name.common);
     const nowFav = isFav(c.cca2);
     this.classList.toggle('active', nowFav);
     this.textContent = nowFav ? '❤️ Saved' : '🤍 Save to Favorites';
   });
+
+  modalBody.querySelectorAll('.modal-tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetCca3 = btn.dataset.cca3;
+      const nextCountry = allCountries.find(cc => cc.cca3 === targetCca3);
+      if (nextCountry) openModal(nextCountry);
+    });
+  });
+
   modalOverlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -219,9 +282,62 @@ function formatNum(n) {
   return n.toString();
 }
 
+function heroCountUp(total) {
+  const duration = 1200;
+  const start = performance.now();
+  const step = now => {
+    const progress = Math.min((now - start) / duration, 1);
+    heroCounter.textContent = formatNum(Math.floor(progress * total));
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function setTheme(mode) {
+  themeMode = mode;
+  document.body.classList.toggle('dark', mode === 'dark');
+  themeToggle.textContent = mode === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem(KEY_THEME, mode);
+}
+
+function initTheme() {
+  const stored = localStorage.getItem(KEY_THEME);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(stored || (prefersDark ? 'dark' : 'light'));
+}
+
+function renderSuggestions(query) {
+  if (!query) {
+    suggestionsList.classList.add('hidden');
+    suggestionsList.innerHTML = '';
+    return;
+  }
+  const q = query.toLowerCase();
+  const matches = allCountries
+    .filter(c => c.name.common.toLowerCase().includes(q) || c.capital?.[0]?.toLowerCase().includes(q))
+    .slice(0, 5);
+  if (!matches.length) {
+    suggestionsList.classList.add('hidden');
+    suggestionsList.innerHTML = '';
+    return;
+  }
+  suggestionsList.classList.remove('hidden');
+  suggestionsList.innerHTML = matches.map(c => {
+    const highlight = text => text.replace(new RegExp(`(${q})`, 'gi'), '<strong>$1</strong>');
+    return `<button type="button" data-name="${c.name.common}">${highlight(c.name.common)}${c.capital?.[0] ? ` — ${highlight(c.capital[0])}` : ''}</button>`;
+  }).join('');
+}
+
+function updateScrollButton() {
+  scrollTopBtn.classList.toggle('hidden', window.scrollY < 300);
+}
+
 modalClose.addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) closeModal(); });
-document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+window.addEventListener('scroll', updateScrollButton);
+scrollTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+themeToggle.addEventListener('click', () => setTheme(themeMode === 'dark' ? 'light' : 'dark'));
 searchInput.addEventListener('input', () => {
   searchQuery = searchInput.value.trim();
   clearBtn.classList.toggle('hidden', !searchQuery);
@@ -230,6 +346,17 @@ searchInput.addEventListener('input', () => {
 clearBtn.addEventListener('click', () => {
   searchInput.value = ''; searchQuery = '';
   clearBtn.classList.add('hidden');
+  renderSuggestions('');
+  applyFilters();
+});
+suggestionsList.addEventListener('click', e => {
+  const button = e.target.closest('button');
+  if (!button) return;
+  const name = button.dataset.name;
+  if (!name) return;
+  searchInput.value = name;
+  searchQuery = name;
+  clearBtn.classList.remove('hidden');
   applyFilters();
 });
 document.querySelectorAll('.filter-pill').forEach(pill => {
@@ -252,4 +379,5 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 updateFavBadge();
+initTheme();
 fetchCountries();

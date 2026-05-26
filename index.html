@@ -20,6 +20,7 @@
         <button class="nav-btn active" data-view="all">All</button>
         <button class="nav-btn" data-view="favorites">❤️ Favorites <span class="fav-badge" id="favBadge">0</span></button>
         <span class="country-count" id="countryCount">— countries</span>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
       </div>
     </div>
   </header>
@@ -27,11 +28,28 @@
   <main class="main">
 
     <section class="hero">
-      <h1>Explore the<br><span class="hero-accent">World</span></h1>
-      <p>Search any country to discover its flag, population, capital, region and more.</p>
+      <div class="hero-flags" aria-hidden="true">
+        <span>🇧🇷</span><span>🇨🇦</span><span>🇯🇵</span><span>🇳🇬</span><span>🇫🇷</span>
+        <span>🇦🇺</span><span>🇮🇳</span><span>🇪🇸</span><span>🇵🇭</span><span>🇹🇷</span>
+      </div>
+      <div class="hero-copy">
+        <h1>Explore the<br><span class="hero-accent">World</span></h1>
+        <p>Search any country to discover its flag, population, capital, region and more.</p>
+      </div>
+      <div class="hero-stats">
+        <span class="hero-label">Countries loaded</span>
+        <strong id="heroCounter">0</strong>
+      </div>
     </section>
 
     <div class="search-bar">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="searchInput" placeholder="Search country, capital, region…" autocomplete="off" />
+      <button class="clear-btn hidden" id="clearBtn" aria-label="Clear search">✕</button>
+    </div>
+    <div class="suggestions hidden" id="suggestionsList"></div>
+
+    <div class="filters" id="filtersRow">
       <span class="search-icon">⌕</span>
       <input type="text" id="searchInput" placeholder="Search country, capital, region…" autocomplete="off" />
       <button class="clear-btn hidden" id="clearBtn">✕</button>
@@ -62,6 +80,7 @@
     <div class="loading hidden" id="loading">
       <div class="spinner"></div>
       <p>Fetching countries…</p>
+      <div class="skeleton-grid" id="skeletonGrid"></div>
     </div>
 
     <div class="error hidden" id="errorMsg">
@@ -77,6 +96,8 @@
 
   </main>
 
+  <button id="scrollTopBtn" class="scroll-top hidden" aria-label="Scroll to top">↑</button>
+
   <!-- Country Detail Modal -->
   <div class="modal-overlay hidden" id="modalOverlay">
     <div class="modal" id="modal">
@@ -84,6 +105,11 @@
       <div class="modal-body" id="modalBody"></div>
     </div>
   </div>
+
+  <footer class="footer">
+    <div>Built by Pujan Rasaili · <a href="https://github.com/pujanrasaili" target="_blank" rel="noreferrer">GitHub</a></div>
+    <div id="footerInfo">Loading... · Data via restcountries.com</div>
+  </footer>
 
   <div id="toast" class="toast hidden"></div>
 
