@@ -1,5 +1,6 @@
 const API = 'https://restcountries.com/v3.1';
-const FIELDS = 'name,flags,population,capital,region,subregion,area,languages,currencies,cca2';
+const FIELDS = 'name,capital,region,subregion,population,area,flags,languages,currencies,cca2';
+const FULL_URL = 'https://restcountries.com/v3.1/all?fields=name,capital,region,subregion,population,area,flags,languages,currencies,cca2';
 
 let allCountries = [];
 let activeRegion = 'all';
@@ -84,7 +85,7 @@ async function fetchCountries() {
   errorMsg.classList.add('hidden');
 
   try {
-    const res = await fetch(`${API}/all?fields=${FIELDS}`);
+    const res = await fetch(FULL_URL);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     allCountries = await res.json();
     skeletonGrid.style.display = 'none';
