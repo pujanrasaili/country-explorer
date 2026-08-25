@@ -80,4 +80,6 @@ Data from the free **[REST Countries API v3.1](https://restcountries.com)** — 
 
 ---
 
-Made with ❤️ by **[Pujan Rasaili](https://github.com/pujanrasaili)**
+## 👨‍💻 Author
+**Pujan Rasaili**
+(https://github.com/pujanrasaili)**
