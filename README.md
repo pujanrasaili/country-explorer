@@ -1,35 +1,35 @@
-# 🌍 Country Explorer
+# Country Explorer
 
 > A beautifully designed world atlas — search, filter, and explore every nation on Earth.
 
-🔗 **Live Demo → [pujanrasaili.github.io/country-explorer](https://pujanrasaili.github.io/country-explorer)**
+ **Live Demo → [pujanrasaili.github.io/country-explorer](https://pujanrasaili.github.io/country-explorer)**
 
 ---
 
-## 🖥️ Preview
+## Preview
 
-### 🌙 Dark Mode
+### Dark Mode
 ![Dark Mode](preview-dark.png)
 
-### ☀️ Light Mode
+###  Light Mode
 ![Light Mode](preview-light.png)
 
 ---
 
-## ✨ Features
+## Features
 
-- 🔍 **Smart Search** — instant results with dropdown suggestions and highlighted matches
-- 🌐 **Region Filter** — Africa, Americas, Asia, Europe, Oceania
-- 🔃 **Sort** — by name A→Z, Z→A, population, or area
-- ❤️ **Favorites** — save countries and view them in a dedicated tab (persisted in localStorage)
-- 🌙 **Dark / Light Mode** — toggle with one click, preference saved
-- 💀 **Skeleton Loading** — smooth loading animation while data fetches
-- 🎨 **Region Color Accents** — each card has a color based on its region
-- 📱 **Fully Responsive** — works great on mobile and desktop
+-  **Smart Search** — instant results with dropdown suggestions and highlighted matches
+-  **Region Filter** — Africa, Americas, Asia, Europe, Oceania
+-  **Sort** — by name A→Z, Z→A, population, or area
+-  **Favorites** — save countries and view them in a dedicated tab (persisted in localStorage)
+-  **Dark / Light Mode** — toggle with one click, preference saved
+-  **Skeleton Loading** — smooth loading animation while data fetches
+-  **Region Color Accents** — each card has a color based on its region
+-  **Fully Responsive** — works great on mobile and desktop
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
@@ -43,7 +43,7 @@ Zero frameworks. Zero dependencies. Pure HTML/CSS/JS.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 country-explorer/
@@ -57,7 +57,7 @@ country-explorer/
 
 ---
 
-## 🚀 Run Locally
+## Run Locally
 
 ```bash
 # Clone the repo
@@ -70,16 +70,16 @@ npx serve .
 
 Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-> ⚠️ Always use a local server. Opening `index.html` directly as a `file://` URL blocks the API fetch.
+>  Always use a local server. Opening `index.html` directly as a `file://` URL blocks the API fetch.
 
 ---
 
-## 🌐 API
+## API
 
 Data from the free **[REST Countries API v3.1](https://restcountries.com)** — no API key required.
 
 ---
 
-## 👨‍💻 Author
+## Author
 **Pujan Rasaili**
 (https://github.com/pujanrasaili)**
